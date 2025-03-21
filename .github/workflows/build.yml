@@ -13,11 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: ${{ runner.temp }}/Android/Sdk
-
     steps:
-      # 先签出主仓库，不包括子模块
       - name: Checkout repository without submodules
         uses: actions/checkout@v3
         with:
@@ -30,20 +26,17 @@ jobs:
 
       - name: Clean up existing submodule reference
         run: |
+          # 删除可能存在的旧子模块目录
           rm -rf core/src/main/golang/clash
-          git rm --cached -f core/src/main/golang/clash || true
+          # 删除.gitmodules中关于该子模块的旧配置（如果存在）
           sed -i '/core\/src\/main\/golang\/clash/d' .gitmodules || true
+          # 删除Git缓存中的子模块信息
           rm -rf .git/modules/core/src/main/golang/clash || true
 
       - name: Manually add submodule from Ieooo/clash
         run: |
           git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
           git submodule update --init --recursive
-
-      - name: Checkout repository with submodules
-        uses: actions/checkout@v3
-        with:
-          submodules: true
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -56,26 +49,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y unzip wget
 
-      - name: Install Android SDK and NDK using sdkmanager
+      - name: Install Android SDK & NDK
         run: |
-          # 设置 Android SDK 路径
-          mkdir -p "$ANDROID_SDK_ROOT"
-          cd $ANDROID_SDK_ROOT
-          # 下载 command-line tools（版本可能需要根据实际情况更新）
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip commandlinetools-linux-9477386_latest.zip -d cmdline-tools
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          mv cmdline-tools "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-          export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
-          # 接受许可并安装必要组件：platform-tools、platforms、build-tools 以及 NDK
-          yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses
-          sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --install "platform-tools" "platforms;android-33" "build-tools;33.0.0" "ndk;23.1.7779620"
+          yes | sudo apt-get install android-sdk
+          yes | sudo apt-get install android-ndk
 
       - name: Set up Android environment variables
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          # 如果你的构建需要 ndk.dir，可以在这里设置：
-          echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/23.1.7779620" >> local.properties
+          echo "ndk.dir=$ANDROID_NDK_ROOT" >> local.properties
 
       - name: Install Golang
         uses: actions/setup-go@v4
