@@ -19,15 +19,25 @@ jobs:
         with:
           submodules: true  # 获取所有子模块
 
-      - name: Remove submodule and reset to latest commit
+      - name: Clean up old submodule commit references
         run: |
-          # 清理并移除子模块，避免引用特定提交
+          # 删除任何不再有效的子模块引用
           git submodule deinit -f core/src/main/golang/clash
           git rm -f core/src/main/golang/clash
-          git commit -m "Remove broken submodule reference"
+          git commit -m "Remove old submodule commit reference"
           git push
 
-          # 重新添加并更新子模块为最新版本
+      - name: Remove submodule cache (force update)
+        run: |
+          # 强制清除缓存并完全更新子模块引用
+          rm -rf .git/modules/core/src/main/golang/clash
+          git submodule update --init --recursive
+          git commit -m "Force submodule update"
+          git push
+
+      - name: Re-add submodule to latest commit from Ieooo/clash
+        run: |
+          # 重新添加子模块并更新到最新的 commit
           git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
           git submodule update --init --recursive
           git commit -m "Update submodule to latest commit from Ieooo/clash"
