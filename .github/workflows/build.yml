@@ -19,6 +19,11 @@ jobs:
         with:
           submodules: false  # 不签出子模块
 
+      - name: Set up Git identity
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Clean up old submodule references
         run: |
           # 彻底清理旧的子模块引用
