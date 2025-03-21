@@ -30,11 +30,6 @@ jobs:
           sed -i '/core\/src\/main\/golang\/clash/d' .gitmodules || true
           rm -rf .git/modules/core/src/main/golang/clash || true
 
-      - name: Manually add submodule from Ieooo/clash
-        run: |
-          git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
-          git submodule update --init --recursive
-
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
