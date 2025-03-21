@@ -14,27 +14,32 @@ jobs:
     runs-on: ubuntu-latest  # 运行环境
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository without submodules
         uses: actions/checkout@v3
         with:
-          submodules: true  # 获取所有子模块
+          submodules: false  # 不签出子模块
 
       - name: Clean up old submodule references
         run: |
-          # 确保子模块没有硬编码的提交，清理并更新引用
+          # 彻底清理旧的子模块引用
           git submodule deinit -f core/src/main/golang/clash
           git rm -f core/src/main/golang/clash
           git commit -m "Remove old submodule commit reference"
           git push
 
-      - name: Remove submodule cache and re-add with updated reference
+      - name: Re-add submodule to latest commit from Ieooo/clash
         run: |
-          # 清除缓存，并重新添加子模块引用，指向新的仓库和分支
+          # 删除缓存并重新添加正确的子模块引用
           rm -rf .git/modules/core/src/main/golang/clash
           git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
           git submodule update --init --recursive
           git commit -m "Re-add submodule with updated reference to Ieooo/clash"
           git push
+
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: true  # 这一步才会签出子模块
 
       - name: Set up JDK
         uses: actions/setup-java@v3
