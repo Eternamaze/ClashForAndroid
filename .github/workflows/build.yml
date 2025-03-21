@@ -7,49 +7,41 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:  # 允许手动触发构建
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # 运行环境
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository without submodules
         uses: actions/checkout@v3
         with:
-          submodules: false  # 不签出子模块
+          submodules: false
 
       - name: Set up Git identity
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
 
-      - name: Clean up old submodule references
+      - name: Clean up existing submodule reference
         run: |
-          # 彻底清理旧的子模块引用
-          git submodule deinit -f core/src/main/golang/clash
-          git rm -f core/src/main/golang/clash
-          git commit -m "Remove old submodule commit reference"
-          git push
+          # 删除可能存在的旧子模块目录
+          rm -rf core/src/main/golang/clash
+          # 删除.gitmodules中关于该子模块的旧配置（如果存在）
+          sed -i '/core\/src\/main\/golang\/clash/d' .gitmodules || true
+          # 删除Git缓存中的子模块信息
+          rm -rf .git/modules/core/src/main/golang/clash || true
 
-      - name: Re-add submodule to latest commit from Ieooo/clash
+      - name: Manually add submodule from Ieooo/clash
         run: |
-          # 删除缓存并重新添加正确的子模块引用
-          rm -rf .git/modules/core/src/main/golang/clash
           git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
           git submodule update --init --recursive
-          git commit -m "Re-add submodule with updated reference to Ieooo/clash"
-          git push
-
-      - name: Checkout repository with submodules
-        uses: actions/checkout@v3
-        with:
-          submodules: true  # 这一步才会签出子模块
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Install dependencies
