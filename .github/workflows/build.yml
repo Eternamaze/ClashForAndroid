@@ -36,6 +36,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Upgrade Gradle Wrapper
+        run: |
+          # 使用与 Java 17 兼容的 Gradle 版本（推荐 7.6+ 或 8.x）
+          ./gradlew wrapper --gradle-version=8.5 --distribution-type=all
+
       - name: Install dependencies
         run: |
           sudo apt-get update
