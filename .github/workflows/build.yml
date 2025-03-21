@@ -9,12 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  ANDROID_SDK_ROOT: ${{ env.RUNNER_TEMP }}/Android/Sdk
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    env:
-      ANDROID_SDK_ROOT: ${{ runner.temp }}/Android/Sdk
 
     steps:
       - name: Checkout repository without submodules
@@ -45,47 +45,4 @@ jobs:
           submodules: true
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Install dependencies (unzip, wget)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip wget
-
-      - name: Install Android SDK and NDK using sdkmanager
-        run: |
-          mkdir -p "$ANDROID_SDK_ROOT"
-          cd "$ANDROID_SDK_ROOT"
-          # 下载 Android command-line tools（版本号可根据需要更新）
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip commandlinetools-linux-9477386_latest.zip -d cmdline-tools
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          mv cmdline-tools "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
-          # 接受所有许可证
-          yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses
-          # 安装必要组件：platform-tools、platforms、build-tools 以及 NDK
-          sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --install "platform-tools" "platforms;android-33" "build-tools;33.0.0" "ndk;23.1.7779620"
-
-      - name: Set up Android environment variables
-        run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/23.1.7779620" >> local.properties
-
-      - name: Install Golang
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.20'
-
-      - name: Build Clash for Android
-        run: |
-          ./gradlew build
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: clash-for-android-apk
-          path: app/build/outputs/apk/**/*.apk
+    
