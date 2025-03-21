@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 先签出主仓库，不包括子模块
       - name: Checkout repository without submodules
         uses: actions/checkout@v3
         with:
@@ -27,25 +26,14 @@ jobs:
 
       - name: Clean up existing submodule reference
         run: |
-          # 删除子模块目录（如果存在）
           rm -rf core/src/main/golang/clash
-          # 从 Git index 中移除旧的子模块记录
-          git rm --cached -f core/src/main/golang/clash || true
-          # 从 .gitmodules 文件中删除关于该子模块的旧条目
           sed -i '/core\/src\/main\/golang\/clash/d' .gitmodules || true
-          # 删除 Git 子模块缓存目录
           rm -rf .git/modules/core/src/main/golang/clash || true
 
       - name: Manually add submodule from Ieooo/clash
         run: |
           git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
           git submodule update --init --recursive
-
-      # 此时可以再次签出子模块（已正确添加）
-      - name: Checkout repository with submodules
-        uses: actions/checkout@v3
-        with:
-          submodules: true
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -58,10 +46,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y unzip wget
 
+      # 使用官方的命令行工具安装
       - name: Install Android SDK & NDK
         run: |
-          yes | sudo apt-get install android-sdk
-          yes | sudo apt-get install android-ndk
+          # 下载命令行工具
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip commandlinetools-linux-*-_latest.zip -d cmdline-tools
+          mv cmdline-tools/cmdline-tools cmdline-tools/latest
+
+          # 设置环境变量
+          echo "$GITHUB_WORKSPACE/cmdline-tools" >> $GITHUB_PATH
+          echo "ANDROID_SDK_ROOT=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
+          mkdir -p android-sdk
+
+          # 接受licenses
+          yes | $GITHUB_WORKSPACE/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          # 安装必要组件
+          $GITHUB_WORKSPACE/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;26.2.11394342"
 
       - name: Set up Android environment variables
         run: |
