@@ -17,7 +17,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: recursive  # 更新子模块
+          submodules: true  # 获取所有子模块
+
+      - name: Remove specific submodule commit reference
+        run: |
+          # 清理子模块，删除对特定提交的引用
+          git submodule deinit -f core/src/main/golang/clash
+          git rm -f core/src/main/golang/clash
+          git commit -m "Remove submodule reference to specific commit"
+          git push
+
+      - name: Re-add submodule and update to latest commit
+        run: |
+          # 重新添加并更新子模块，指向新的仓库和最新的提交
+          git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
+          git submodule update --init --recursive
+          git commit -m "Update submodule to latest commit from Ieooo/clash"
+          git push
 
       - name: Set up JDK
         uses: actions/setup-java@v3
