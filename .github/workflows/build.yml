@@ -19,35 +19,28 @@ jobs:
         with:
           submodules: true  # 获取所有子模块
 
-      - name: Clean up old submodule commit references
+      - name: Clean up old submodule references
         run: |
-          # 删除任何不再有效的子模块引用
+          # 确保子模块没有硬编码的提交，清理并更新引用
           git submodule deinit -f core/src/main/golang/clash
           git rm -f core/src/main/golang/clash
           git commit -m "Remove old submodule commit reference"
           git push
 
-      - name: Remove submodule cache (force update)
+      - name: Remove submodule cache and re-add with updated reference
         run: |
-          # 强制清除缓存并完全更新子模块引用
+          # 清除缓存，并重新添加子模块引用，指向新的仓库和分支
           rm -rf .git/modules/core/src/main/golang/clash
-          git submodule update --init --recursive
-          git commit -m "Force submodule update"
-          git push
-
-      - name: Re-add submodule to latest commit from Ieooo/clash
-        run: |
-          # 重新添加子模块并更新到最新的 commit
           git submodule add https://github.com/Ieooo/clash.git core/src/main/golang/clash
           git submodule update --init --recursive
-          git commit -m "Update submodule to latest commit from Ieooo/clash"
+          git commit -m "Re-add submodule with updated reference to Ieooo/clash"
           git push
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'  # 根据 Android Gradle 版本调整
+          java-version: '17'
 
       - name: Install dependencies
         run: |
@@ -56,7 +49,6 @@ jobs:
 
       - name: Install Android SDK & NDK
         run: |
-          echo "Installing Android SDK and NDK..."
           yes | sudo apt-get install android-sdk
           yes | sudo apt-get install android-ndk
 
@@ -68,14 +60,14 @@ jobs:
       - name: Install Golang
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20'  # 根据 Clash 依赖调整
+          go-version: '1.20'
 
       - name: Build Clash for Android
         run: |
           ./gradlew build
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4  # 更新为 v4 版本
+        uses: actions/upload-artifact@v4
         with:
           name: clash-for-android-apk
           path: app/build/outputs/apk/**/*.apk
